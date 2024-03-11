@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+</head>
+<body>
+    <a href="/callibrage">Commencer le calibrage</a>
+    <script>
+        async function requete(width,height){
+            let request = fetch("/window-size?width="+width+"&height="+height);
+            await request.then( data => {
+                console.log(data);
+            })
+            .catch( error => {
+                // Un bloc catch pour attrapper les eventuelles erreurs
+                console.log("Erreur: " + error);
+            })
+        }
+
+        let width = document.documentElement.clientWidth;
+        let height = document.documentElement.clientHeight;
+        
+        requete(width,height);
+    </script>
+</body>
+</html>

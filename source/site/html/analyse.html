@@ -1,0 +1,60 @@
+<html>
+    <head>
+        <title>Analyse</title>
+        <style>
+            #tableau {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="tableau">
+            <video id="video" width="1080" height="920" controls>
+            </video>
+        </div>
+        
+        
+    </body>
+    <script>
+        async function add_video(){
+            // URL de l'image que vous souhaitez récupérer
+            const response = await fetch('/add-video');
+            if (!response.ok) {
+                console.error('Erreur lors de la récupération des données :', response.statusText);
+                return;
+            }
+
+            let blob = await response.blob();
+            console.log(blob)
+            const videoUrlObject = URL.createObjectURL(blob);
+
+            // Utilisation de l'URL de l'image dans votre application (par exemple, en l'assignant à la source d'une balise img)
+            const sourceElement = document.createElement('source');
+            sourceElement.src = videoUrlObject;
+            sourceElement.type = "video/mp4"
+            document.getElementById("video").appendChild(sourceElement);
+        }
+        async function add_heatmap(){
+            // URL de l'image que vous souhaitez récupérer
+            const response = await fetch('/add-heatmap');
+            if (!response.ok) {
+                console.error('Erreur lors de la récupération des données :', response.statusText);
+                return;
+            }
+
+            let blob = await response.blob();
+            console.log(blob)
+            const imageUrlObject = URL.createObjectURL(blob);
+
+            // Utilisation de l'URL de l'image dans votre application (par exemple, en l'assignant à la source d'une balise img)
+            const imgElement = document.createElement('img');
+            imgElement.src = imageUrlObject;
+            document.getElementById("tableau").appendChild(imgElement);
+        }
+
+        add_video();
+        add_heatmap();
+
+    </script>
+</html>

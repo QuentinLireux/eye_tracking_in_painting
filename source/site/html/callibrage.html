@@ -1,0 +1,106 @@
+<html>
+    <head>
+        <title>Test</title>
+    </head>
+    <body>
+        <div id="div_canvas">
+            
+        </div>
+        
+    </body>
+    <script>
+        function  canvas(width, height){
+            let canvas = document.createElement("canvas");
+
+            let width_att = document.createAttribute("width");
+            width_att.value = width;
+            let height_att = document.createAttribute("height");
+            height_att.value = height;
+
+            let id_att = document.createAttribute("id");
+            id_att.value = "zone_callibrage";
+            
+
+            canvas.setAttributeNode(width_att);
+            canvas.setAttributeNode(height_att);
+
+            let div_canvas = document.getElementById("div_canvas");
+            div_canvas.appendChild(canvas);
+
+        }
+
+        function draw_point(x, y){
+            canvas = document.querySelector("canvas");
+            let ctx = canvas.getContext("2d");
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2, true);
+            ctx.fillStyle = "red";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function clear(width, height){
+            canvas = document.querySelector("canvas");
+            let ctx = canvas.getContext("2d"); 
+            ctx.clearRect(0, 0, width, height);
+        }
+
+        async function requete(x, y, nb_iteration){
+            let request = fetch("/callibre?x="+x+"&y="+y+"&i="+nb_iteration);
+            await request.then( response => {
+                //si la requête a réussi, on convertit les données
+                if (response.ok) {
+                    return response.text();
+                }
+                // sinon, on provoque une erreur
+                else {
+                    throw new Error("Requête échouée avec le status " + response.status);
+                }
+            })
+            .then( data => {
+                console.log(data)
+            })
+            .catch( error => {
+                // Un bloc catch pour attrapper les eventuelles erreurs
+                console.log("Erreur: " + error);
+            })
+        }
+        async function callibrage(callibration_points){
+            for(let i=0; i<callibration_points.length; i++){ //On affiche les trois points de callibrage et on requete sur chaque point
+                
+                clear(width, height);
+                draw_point(callibration_points[i][0],callibration_points[i][1]);
+               
+                await requete(callibration_points[i][0], callibration_points[i][1], i);
+           
+            }
+            //à la fin du callibrage on redirige vers la page 
+            console.log(window.location)
+            console.log(window.location.href)
+            window.location.href = window.location.origin + '/choix-oeuvre';
+        }
+
+        //Récupération de la taille de l'écran
+        let width = document.documentElement.clientWidth;
+        let height = document.documentElement.clientHeight;
+
+        //Cacher la barre de scroll
+        document.body.style.overflow = "hidden"
+        
+
+        //Créer l'élément canvas dans le DOM
+        canvas(width, height);
+
+        //calcul des points de callibrages en fonction de la taille de l'ecran
+        let callibration_points = [[0+10, 0+10], [width-20, 0+10],[width-20,height-20], [0+10, height-20]];
+
+        callibrage(callibration_points);
+        
+        
+        
+      </script>
+</html>

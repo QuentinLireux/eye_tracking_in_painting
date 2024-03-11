@@ -1,0 +1,211 @@
+<html>
+        <head>
+            <title>Eye-Tracker</title>
+
+            <style>
+                * {
+                    margin: 0;
+                    height: 100%;
+                }
+
+                #div_canvas {
+                    position: relative;
+                }
+
+                .zone_regard, .fond {
+                    position:absolute;
+                }
+
+                .fond {
+                    height: 100vh; /* 100% de la hauteur de la vue */
+                    width: 100vh;
+                    left: 50%;
+                    transform: translate(-50%, -0%);
+                }
+
+                img {
+                    object-fit: cover; /* Ajuste la taille sans étirer */
+                    width: 100%; /* Ne dépasse pas la largeur maximale de l'écran */
+                    height: 100%;
+                    max-width: 100%;
+                    max-height: 100%;
+                }
+
+            </style>
+        </head>
+        <body>
+            <div id="div_canvas">
+                
+                <div class="fond">
+
+                </div>
+                
+            </div>
+        </body>
+        <script>
+            //<img class="fond" src="https://mba.caen.fr/sites/mba/files/2020-10/IMG_3410.JPG">
+            function sleep(ms){
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            let bool = false;
+
+            function handleKeyPress(event) {
+                // Vérifier si la touche appuyée est la touche Espace
+                if (event.key === ' ') {
+                    console.log('La touche Espace a été pressée.');
+                    bool = true;
+                    stop();
+
+                    let img = document.getElementById("oeuvre");
+                    let rect = img.getBoundingClientRect();
+                    let x1 = rect.x;
+                    let y1 = rect.y;
+                    let x2 = rect.x + img.width;
+                    let y2 = rect.y + img.height;
+                    console.log("coo de l'image =("+x1+","+y1+")  ("+x2+","+y2+")");
+
+                    window.location.href = window.location.origin + "/analyse?x1="+x1+"&y1="+y1+"&x2="+x2+"&y2="+y2+"&width="+width+"&height="+height;
+                }
+            }
+            
+            async function stop(){
+                const response = await fetch('/stop');
+                if (!response.ok) {
+                    console.error('Erreur lors de la récupération des données :', response.statusText);
+                    return;
+                }
+                clear(width, height);
+            }
+
+            function  canvas(width, height){
+                let canvas = document.createElement("canvas");
+
+                //canvas.style.backgroundColor = 'black';
+                
+                let width_att = document.createAttribute("width");
+                width_att.value = width;
+                let height_att = document.createAttribute("height");
+                height_att.value = height;
+    
+                let id_att = document.createAttribute("id");
+                id_att.value = "zone_regard";
+                
+    
+                canvas.setAttributeNode(width_att);
+                canvas.setAttributeNode(height_att);
+                
+                let class_att = document.createAttribute("class");
+                class_att.value = "zone_regard";
+                canvas.setAttributeNode(class_att);
+
+                let div_canvas = document.getElementById("div_canvas");
+                div_canvas.appendChild(canvas);
+    
+            }
+
+            async function add_image(){
+                // URL de l'image que vous souhaitez récupérer
+                const response = await fetch('/add-image');
+                if (!response.ok) {
+                    console.error('Erreur lors de la récupération des données :', response.statusText);
+                    return;
+                }
+
+                let blob = await response.blob();
+                console.log(blob)
+                const imageUrlObject = URL.createObjectURL(blob);
+
+                // Utilisation de l'URL de l'image dans votre application (par exemple, en l'assignant à la source d'une balise img)
+                const imgElement = document.createElement('img');
+                imgElement.src = imageUrlObject;
+                imgElement.id = "oeuvre"
+                document.getElementsByClassName("fond")[0].appendChild(imgElement);
+            }
+
+            async function add_audio(){
+                // URL de l'image que vous souhaitez récupérer
+                const response = await fetch('/add-sound');
+                if (!response.ok) {
+                    console.error('Erreur lors de la récupération des données :', response.statusText);
+                    return;
+                }
+
+                let blob = await response.blob();
+                console.log(blob)
+                const audioUrlObject = URL.createObjectURL(blob);
+                console.log(audioUrlObject);
+                var audio = new Audio(audioUrlObject);
+                audio.play();
+                boucle();
+                      
+            }
+
+            async function where_is_gaze(){
+                const response = await fetch('/where-is-gaze');
+                if (!response.ok) {
+                    console.error('Erreur lors de la récupération des données :', response.statusText);
+                    return;
+                }
+
+                let data = await response.text();
+
+                // Traitez les données reçues (ici, affichage dans la console)
+                data = data.split(" ");
+                update_tracker(data[0], data[1]);
+
+            }
+
+            function update_tracker(x, y){
+                clear(width, height);
+                canvas = document.querySelector("canvas");
+                let ctx = canvas.getContext("2d");
+                ctx.beginPath();
+                ctx.arc(x, y, 20, 0, Math.PI * 2, true);
+                ctx.fillStyle = "red";
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            function clear(width, height){
+                canvas = document.querySelector("canvas");
+                let ctx = canvas.getContext("2d"); 
+                ctx.clearRect(0, 0, width, height);
+            }
+
+            async function boucle(){
+                while (!bool){
+                    where_is_gaze();
+                    await sleep(1);
+                }
+            }
+
+
+            //Récupération de la taille de l'écran
+            let width = document.documentElement.clientWidth;
+            let height = document.documentElement.clientHeight;
+            console.log(width);
+            console.log(height);
+            //Cacher la barre de scroll
+            document.body.style.overflow = "hidden";
+
+            
+            // Attacher le gestionnaire d'événements à l'événement keydown
+            document.addEventListener('keydown', handleKeyPress);
+            
+                     
+
+
+            //Créer l'élément canvas dans le DOM
+            canvas(width, height);
+            add_image();
+          
+            document.addEventListener("keydown", function () {
+                if (event.key === 'a') {
+                    console.log("Start");
+                    add_audio();
+                }
+            });
+        
+        
+      </script>
+    </html>
